@@ -20,14 +20,14 @@ function selecionarFoto(indice: number) {
 
 <template>
   <div>
-    <div class="overflow-hidden rounded-3xl bg-areia-100">
+    <div class="overflow-hidden rounded-[1.75rem] bg-areia-100 shadow-sm ring-1 ring-linha">
       <img
         v-if="fotoAtual"
         :src="fotoAtual.url"
         :alt="fotoAtual.alt"
-        class="aspect-[4/3] w-full object-cover sm:aspect-[16/10]"
+        class="aspect-[4/3] w-full object-cover sm:aspect-[16/9] sm:max-h-[36rem]"
       >
-      <div v-else class="flex aspect-[4/3] items-end p-6 text-apagado sm:aspect-[16/10]">
+      <div v-else class="flex aspect-[4/3] items-end bg-gradient-to-t from-floresta-900/70 to-areia-100 p-6 text-areia-50 sm:aspect-[16/9]">
         {{ titulo }} ainda não tem fotos.
       </div>
     </div>
@@ -36,7 +36,7 @@ function selecionarFoto(indice: number) {
         v-for="(miniatura, indice) in itens"
         :key="miniatura.id"
         type="button"
-        class="h-20 w-24 shrink-0 overflow-hidden rounded-2xl ring-2 ring-offset-2 ring-offset-areia-50"
+        class="h-20 w-28 shrink-0 overflow-hidden rounded-2xl ring-2 ring-offset-2 ring-offset-areia-50 sm:h-24 sm:w-32"
         :class="indice === indiceAtual ? 'ring-terracota-600' : 'ring-transparent'"
         :aria-label="`Mostrar foto ${indice + 1} de ${itens.length}`"
         :aria-current="indice === indiceAtual"

@@ -18,7 +18,7 @@ function aoCompartilhar() {
   <div class="w-full sm:w-auto">
     <button
       type="button"
-      class="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-floresta-800 bg-papel px-5 text-base font-medium text-floresta-800 disabled:opacity-60 sm:w-auto"
+      class="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-floresta-800 bg-papel px-6 text-base font-semibold text-floresta-800 shadow-sm transition hover:bg-floresta-800 hover:text-areia-50 disabled:opacity-60 sm:w-auto"
       :disabled="enviando"
       @click="aoCompartilhar"
     >

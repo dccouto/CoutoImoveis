@@ -37,7 +37,8 @@ async function aoEntrar() {
 <template>
   <AvisoSupabase v-if="!configurado" />
   <section v-else class="mx-auto w-full max-w-md px-4 py-12">
-    <h1 class="text-4xl text-floresta-900">Área do anunciante</h1>
+    <div class="rounded-[1.75rem] bg-papel p-6 ring-1 ring-linha sm:p-8">
+    <h1 class="font-serif text-4xl text-floresta-900">Área do anunciante</h1>
     <p class="mt-2 text-apagado">Entre com o usuário criado em Authentication no Supabase.</p>
     <form class="mt-6 space-y-4" @submit.prevent="aoEntrar">
       <div>
@@ -49,9 +50,10 @@ async function aoEntrar() {
         <input id="senha" v-model="senha" type="password" autocomplete="current-password" required class="min-h-12 w-full rounded-2xl border border-linha bg-papel px-3">
       </div>
       <p v-if="erro" class="text-sm text-terracota-700" role="alert">{{ erro }}</p>
-      <button type="submit" class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-floresta-800 font-medium text-areia-50 disabled:opacity-60" :disabled="enviando">
+      <button type="submit" class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-floresta-800 font-semibold text-areia-50 disabled:opacity-60" :disabled="enviando">
         {{ enviando ? 'Entrando…' : 'Entrar' }}
       </button>
     </form>
+    </div>
   </section>
 </template>

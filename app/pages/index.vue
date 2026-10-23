@@ -49,9 +49,9 @@ onMounted(carregarCatalogo)
 
 <template>
   <AvisoSupabase v-if="!configurado" />
-  <div v-else class="mx-auto w-full max-w-6xl px-4 py-8">
-    <p class="text-sm uppercase tracking-wide text-terracota-700">À venda</p>
-    <h1 class="mt-2 max-w-2xl text-4xl leading-tight text-floresta-900 sm:text-5xl">
+  <div v-else class="mx-auto w-full max-w-6xl px-4 py-8 sm:py-12">
+    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-terracota-700">À venda</p>
+    <h1 class="mt-3 max-w-3xl font-serif text-3xl leading-[1.08] text-floresta-900 sm:text-5xl lg:text-6xl">
       Casas e apartamentos com foto, preço e endereço.
     </h1>
     <div class="mt-6 flex flex-wrap gap-2" role="radiogroup" aria-label="Filtrar por tipo">
@@ -77,7 +77,10 @@ onMounted(carregarCatalogo)
       </button>
     </div>
     <template v-else>
-      <p v-if="!ativosVisiveis.length" class="mt-10 text-apagado">Nenhum imóvel ativo neste filtro.</p>
+      <div v-if="!ativosVisiveis.length" class="mt-10 w-full min-w-0 rounded-[1.75rem] border border-dashed border-linha bg-papel px-5 py-12 text-center sm:px-6 sm:py-14">
+        <p class="font-serif text-2xl text-floresta-900 sm:text-3xl">Nenhum imóvel neste filtro</p>
+        <p class="mx-auto mt-2 max-w-md text-apagado">Quando houver um anúncio ativo, a foto e o preço aparecem aqui.</p>
+      </div>
       <ul v-else class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <li v-for="imovel in ativosVisiveis" :key="imovel.id">
           <CartaoImovel :imovel="imovel" />

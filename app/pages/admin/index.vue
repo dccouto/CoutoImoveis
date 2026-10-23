@@ -68,7 +68,10 @@ onMounted(carregarPainel)
     </div>
     <p v-if="carregando" class="mt-8 text-apagado">Carregando…</p>
     <p v-else-if="erro" class="mt-8 text-terracota-700" role="alert">{{ erro }}</p>
-    <p v-else-if="!listaImoveis.length" class="mt-8 text-apagado">Nenhum imóvel cadastrado. Comece pelo primeiro anúncio.</p>
+    <div v-else-if="!listaImoveis.length" class="mt-8 rounded-[1.75rem] border border-dashed border-linha bg-papel px-6 py-12 text-center">
+      <p class="font-serif text-3xl text-floresta-900">Nenhum imóvel cadastrado</p>
+      <p class="mt-2 text-apagado">Comece pelo primeiro anúncio.</p>
+    </div>
     <ul v-else class="mt-6 space-y-3">
       <li v-for="imovel in listaImoveis" :key="imovel.id" class="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-papel p-4 ring-1 ring-linha">
         <div>

@@ -71,13 +71,17 @@ watch(idImovel, carregarImovel)
     </div>
     <article v-else-if="imovelSelecionado" class="mt-4">
       <GaleriaFotos :itens="itensGaleria" :titulo="imovelSelecionado.titulo" />
-      <div class="mt-6 flex flex-wrap items-center gap-3">
-        <p class="text-sm uppercase tracking-wide text-apagado">{{ rotuloTipo(imovelSelecionado.tipo) }}</p>
-        <SeloStatus v-if="imovelSelecionado.status !== 'ativo'" :status="imovelSelecionado.status" />
+      <div class="mt-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div class="flex flex-wrap items-center gap-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-apagado">{{ rotuloTipo(imovelSelecionado.tipo) }}</p>
+            <SeloStatus v-if="imovelSelecionado.status !== 'ativo'" :status="imovelSelecionado.status" />
+          </div>
+          <h1 class="mt-2 max-w-3xl font-serif text-3xl leading-[1.08] text-floresta-900 sm:text-5xl">{{ imovelSelecionado.titulo }}</h1>
+          <p class="mt-2 text-lg text-apagado">{{ imovelSelecionado.bairro }} · {{ imovelSelecionado.cidade }}</p>
+        </div>
+        <p class="font-serif text-4xl text-terracota-700">{{ formatarPreco(imovelSelecionado.precoCentavos) }}</p>
       </div>
-      <h1 class="mt-2 text-4xl leading-tight text-floresta-900 sm:text-5xl">{{ imovelSelecionado.titulo }}</h1>
-      <p class="mt-3 text-3xl text-terracota-700">{{ formatarPreco(imovelSelecionado.precoCentavos) }}</p>
-      <p class="mt-2 text-lg text-apagado">{{ imovelSelecionado.bairro }} · {{ imovelSelecionado.cidade }}</p>
       <p v-if="imovelSelecionado.status === 'rascunho'" class="mt-3 text-sm text-apagado">
         Rascunho: este anúncio não aparece no catálogo público.
       </p>

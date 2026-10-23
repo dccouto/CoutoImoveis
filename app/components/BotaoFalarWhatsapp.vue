@@ -22,12 +22,12 @@ const temNumero = computed(() => Boolean(normalizarWhatsapp(propriedades.numeroW
       :href="linkContato"
       target="_blank"
       rel="noopener noreferrer"
-      class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-floresta-800 px-5 text-center text-base font-medium text-areia-50 sm:w-auto"
+      class="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-floresta-800 px-6 text-center text-base font-semibold text-areia-50 shadow-sm transition hover:bg-floresta-900 sm:w-auto"
     >
       Falar no WhatsApp
     </a>
     <div v-else>
-      <button type="button" class="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full bg-floresta-800/40 px-5 text-areia-50 sm:w-auto" disabled aria-describedby="aviso-whatsapp">
+      <button type="button" class="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full bg-floresta-800/40 px-6 font-semibold text-areia-50 sm:w-auto" disabled aria-describedby="aviso-whatsapp">
         Falar no WhatsApp
       </button>
       <p id="aviso-whatsapp" class="mt-2 max-w-sm text-sm text-apagado">
