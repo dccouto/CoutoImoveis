@@ -1,0 +1,25 @@
+{
+  "name": "CoutoImoveis",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --port 3000",
+    "generate": "nuxt generate && node scripts/preparar-paginas.mjs",
+    "preview": "nuxt preview --port 3000",
+    "postinstall": "nuxt prepare"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^1.0.3",
+    "@supabase/supabase-js": "^2.118.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "nuxt": "^4.6.2",
+    "pinia": "^4.1.0",
+    "tailwindcss": "^4.3.3",
+    "vue": "^3.5.44",
+    "vue-router": "^5.4.0"
+  }
+}

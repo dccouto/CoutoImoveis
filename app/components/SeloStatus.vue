@@ -1,0 +1,19 @@
+<script setup lang="ts">
+import type { StatusImovel } from '~/tipos/imovel'
+
+const propriedades = defineProps<{
+  status: StatusImovel
+}>()
+
+const classe = computed(() => {
+  if (propriedades.status === 'vendido') return 'bg-apagado text-areia-50'
+  if (propriedades.status === 'rascunho') return 'bg-areia-100 text-tinta'
+  return 'bg-floresta-800 text-areia-50'
+})
+</script>
+
+<template>
+  <span class="inline-flex min-h-8 items-center rounded-full px-3 text-xs font-medium uppercase tracking-wide" :class="classe">
+    {{ rotuloStatus(status) }}
+  </span>
+</template>
