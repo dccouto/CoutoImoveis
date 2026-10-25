@@ -1,16 +1,36 @@
-<script setup lang="ts">
+<script lang="ts">
+import type { PropType } from 'vue'
 import type { Imovel } from '~/tipos/imovel'
+import { compartilharNoWhatsapp } from '~/utils/compartilhar'
 
-const propriedades = defineProps<{
-  imovel: Imovel
-  urlCapa: string | null
-  urlPagina: string
-}>()
-
-const { aviso, legendaVisivel, enviando, compartilharNoWhatsapp } = useCompartilharWhatsapp()
-
-function aoCompartilhar() {
-  compartilharNoWhatsapp(propriedades.imovel, propriedades.urlCapa, propriedades.urlPagina)
+export default {
+  props: {
+    imovel: { type: Object as PropType<Imovel>, required: true },
+    urlCapa: { type: String as PropType<string | null>, default: null },
+    urlPagina: { type: String, required: true },
+  },
+  data() {
+    return {
+      aviso: '',
+      legendaVisivel: '',
+      enviando: false,
+    }
+  },
+  methods: {
+    async aoCompartilhar() {
+      this.enviando = true
+      this.aviso = ''
+      this.legendaVisivel = ''
+      try {
+        const resultado = await compartilharNoWhatsapp(this.imovel, this.urlCapa, this.urlPagina)
+        this.aviso = resultado.aviso
+        this.legendaVisivel = resultado.legendaVisivel
+      }
+      finally {
+        this.enviando = false
+      }
+    },
+  },
 }
 </script>
 

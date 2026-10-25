@@ -1,21 +1,33 @@
-<script setup lang="ts">
-defineProps<{
-  painel?: boolean
-}>()
+<script lang="ts">
+import { estadoConfiguracao, carregarConfiguracao } from '~/estado/configuracaoPublica'
+import { sair as encerrarSessao } from '~/estado/sessao'
 
-const { configuracao, carregarConfiguracao } = useConfiguracaoPublica()
-const { sair } = useSessao()
-
-onMounted(() => {
-  carregarConfiguracao()
-})
+export default {
+  props: {
+    painel: { type: Boolean, default: false },
+  },
+  computed: {
+    nomeExibido(): string {
+      return estadoConfiguracao.nomeExibido
+    },
+  },
+  mounted() {
+    carregarConfiguracao(this.$supabase)
+  },
+  methods: {
+    async sair() {
+      await encerrarSessao(this.$supabase)
+      await this.$router.push('/admin/login')
+    },
+  },
+}
 </script>
 
 <template>
   <header class="min-w-0 border-b border-white/10 bg-floresta-900 text-areia-50">
     <div class="mx-auto flex h-16 w-full max-w-6xl min-w-0 items-center gap-3 px-4">
       <NuxtLink to="/" class="inline-flex min-h-11 min-w-0 items-center rounded-md" aria-label="Couto Imóveis, início">
-        <LogoMarca :nome="configuracao.nomeExibido" tom="claro" />
+        <LogoMarca :nome="nomeExibido" tom="claro" />
       </NuxtLink>
       <nav
         class="ml-auto flex shrink-0 items-center gap-1 overflow-x-auto"

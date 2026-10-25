@@ -1,76 +1,95 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { DadosImovel, Imovel } from '~/tipos/imovel'
+import { excluirImovel, getImovel, salvarImovel } from '~/servicos/imoveis'
+import { getCapa, getUrlFoto } from '~/utils/fotos'
 
-definePageMeta({
-  layout: 'painel',
-  middleware: 'painel',
-})
-
-const rota = useRoute()
-const roteador = useRouter()
-const { configurado, cliente } = useClienteSupabase()
-const { getImovel, salvarImovel, excluirImovel } = useImoveis()
-const { getUrlAbsoluta } = useUrlPublica()
-
-const idImovel = computed(() => String(rota.params.id || ''))
-const imovelSelecionado = ref<Imovel | null>(null)
-const carregando = ref(true)
-const salvando = ref(false)
-const erro = ref('')
-const confirmarAberto = ref(false)
-
-const capaAtual = computed(() => imovelSelecionado.value ? getCapa(imovelSelecionado.value.fotos) : null)
-const urlCapa = computed(() => {
-  if (!cliente || !capaAtual.value) return null
-  return getUrlFoto(cliente, capaAtual.value.caminho)
-})
-const urlPagina = computed(() => getUrlAbsoluta(`/imovel/${idImovel.value}`))
-
-useHead({ title: computed(() => imovelSelecionado.value ? `Editar ${imovelSelecionado.value.titulo}` : 'Editar imóvel') })
-
-async function carregarEdicao() {
-  carregando.value = true
-  erro.value = ''
-  try {
-    imovelSelecionado.value = await getImovel(idImovel.value)
-    if (!imovelSelecionado.value) erro.value = 'Imóvel não encontrado.'
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível abrir o imóvel.'
-  }
-  finally {
-    carregando.value = false
-  }
+export default {
+  data() {
+    return {
+      imovelSelecionado: null as Imovel | null,
+      carregando: true,
+      salvando: false,
+      erro: '',
+      confirmarAberto: false,
+      configurado: false,
+    }
+  },
+  computed: {
+    idImovel(): string {
+      return String(this.$route.params.id || '')
+    },
+    capaAtual() {
+      return this.imovelSelecionado ? getCapa(this.imovelSelecionado.fotos) : null
+    },
+    urlCapa(): string | null {
+      if (!this.$supabase || !this.capaAtual) return null
+      return getUrlFoto(this.$supabase, this.capaAtual.caminho)
+    },
+    urlPagina(): string {
+      const href = this.$router.resolve(`/imovel/${this.idImovel}`).href
+      if (!import.meta.client) return href
+      return new URL(href, window.location.origin).href
+    },
+  },
+  watch: {
+    imovelSelecionado() {
+      this.definirTitulo()
+    },
+  },
+  created() {
+    this.configurado = Boolean(this.$supabase)
+    this.definirTitulo()
+  },
+  mounted() {
+    this.carregarEdicao()
+  },
+  methods: {
+    definirTitulo() {
+      const titulo = this.imovelSelecionado ? `Editar ${this.imovelSelecionado.titulo}` : 'Editar imóvel'
+      useHead({ title: titulo })
+      if (import.meta.client) document.title = titulo
+    },
+    async carregarEdicao() {
+      this.carregando = true
+      this.erro = ''
+      try {
+        this.imovelSelecionado = await getImovel(this.$supabase, this.idImovel)
+        if (!this.imovelSelecionado) this.erro = 'Imóvel não encontrado.'
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível abrir o imóvel.'
+      }
+      finally {
+        this.carregando = false
+      }
+    },
+    async aoSalvar(dados: DadosImovel) {
+      if (!this.imovelSelecionado) return
+      this.salvando = true
+      this.erro = ''
+      try {
+        this.imovelSelecionado = await salvarImovel(this.$supabase, dados, this.imovelSelecionado.id)
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível salvar.'
+      }
+      finally {
+        this.salvando = false
+      }
+    },
+    async confirmarExclusao() {
+      if (!this.imovelSelecionado) return
+      this.confirmarAberto = false
+      try {
+        await excluirImovel(this.$supabase, this.imovelSelecionado)
+        await this.$router.replace('/admin')
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível excluir.'
+      }
+    },
+  },
 }
-
-async function aoSalvar(dados: DadosImovel) {
-  if (!imovelSelecionado.value) return
-  salvando.value = true
-  erro.value = ''
-  try {
-    imovelSelecionado.value = await salvarImovel(dados, imovelSelecionado.value.id)
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível salvar.'
-  }
-  finally {
-    salvando.value = false
-  }
-}
-
-async function confirmarExclusao() {
-  if (!imovelSelecionado.value) return
-  confirmarAberto.value = false
-  try {
-    await excluirImovel(imovelSelecionado.value)
-    await roteador.replace('/admin')
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível excluir.'
-  }
-}
-
-onMounted(carregarEdicao)
 </script>
 
 <template>
@@ -93,7 +112,10 @@ onMounted(carregarEdicao)
       <div class="mt-6 space-y-8">
         <FormularioImovel :key="imovelSelecionado.atualizadoEm" :imovel-inicial="imovelSelecionado" :salvando="salvando" rotulo-salvar="Salvar alterações" @salvar="aoSalvar" />
         <GerenciadorFotos :imovel-id="imovelSelecionado.id" :fotos="imovelSelecionado.fotos" @atualizado="carregarEdicao" />
-        <BotaoCompartilharWhatsapp :imovel="imovelSelecionado" :url-capa="urlCapa" :url-pagina="urlPagina" />
+        <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <BotaoCompartilharWhatsapp :imovel="imovelSelecionado" :url-capa="urlCapa" :url-pagina="urlPagina" />
+          <BotaoCompartilharFacebook :imovel="imovelSelecionado" :url-capa="urlCapa" :url-pagina="urlPagina" />
+        </div>
         <button type="button" class="inline-flex min-h-12 items-center rounded-full border border-terracota-600 px-5 text-terracota-700" @click="confirmarAberto = true">
           Excluir imóvel
         </button>

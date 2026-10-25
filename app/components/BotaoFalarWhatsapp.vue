@@ -1,18 +1,24 @@
-<script setup lang="ts">
+<script lang="ts">
+import type { PropType } from 'vue'
 import type { Imovel } from '~/tipos/imovel'
+import { montarLinkWhatsapp, montarTextoContato, normalizarWhatsapp } from '~/utils/whatsapp'
 
-const propriedades = defineProps<{
-  imovel: Imovel
-  numeroWhatsapp: string
-  urlPagina: string
-}>()
-
-const linkContato = computed(() => {
-  const texto = montarTextoContato(propriedades.imovel, propriedades.urlPagina)
-  return montarLinkWhatsapp(propriedades.numeroWhatsapp, texto)
-})
-
-const temNumero = computed(() => Boolean(normalizarWhatsapp(propriedades.numeroWhatsapp)))
+export default {
+  props: {
+    imovel: { type: Object as PropType<Imovel>, required: true },
+    numeroWhatsapp: { type: String, required: true },
+    urlPagina: { type: String, required: true },
+  },
+  computed: {
+    linkContato(): string {
+      const texto = montarTextoContato(this.imovel, this.urlPagina)
+      return montarLinkWhatsapp(this.numeroWhatsapp, texto)
+    },
+    temNumero(): boolean {
+      return Boolean(normalizarWhatsapp(this.numeroWhatsapp))
+    },
+  },
+}
 </script>
 
 <template>

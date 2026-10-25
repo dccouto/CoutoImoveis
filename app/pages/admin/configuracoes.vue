@@ -1,69 +1,74 @@
-<script setup lang="ts">
-definePageMeta({
-  layout: 'painel',
-  middleware: 'painel',
-})
+<script lang="ts">
+import { setConfiguracao } from '~/estado/configuracaoPublica'
+import { getConfiguracao, salvarConfiguracao } from '~/servicos/imoveis'
+import { validarNumeroWhatsapp } from '~/utils/whatsapp'
 
-useHead({ title: 'WhatsApp · Couto Imóveis' })
-
-const { configurado } = useClienteSupabase()
-const { getConfiguracao, salvarConfiguracao } = useImoveis()
-const { setConfiguracao } = useConfiguracaoPublica()
-
-const numeroWhatsapp = ref('')
-const nomeExibido = ref('Couto Imóveis')
-const carregando = ref(true)
-const salvando = ref(false)
-const erro = ref('')
-const aviso = ref('')
-const semLinha = ref(false)
-
-async function carregar() {
-  carregando.value = true
-  erro.value = ''
-  try {
-    const atual = await getConfiguracao()
-    if (!atual) {
-      semLinha.value = true
-      return
+export default {
+  data() {
+    return {
+      numeroWhatsapp: '',
+      nomeExibido: 'Couto Imóveis',
+      carregando: true,
+      salvando: false,
+      erro: '',
+      aviso: '',
+      semLinha: false,
+      configurado: false,
     }
-    numeroWhatsapp.value = atual.numeroWhatsapp
-    nomeExibido.value = atual.nomeExibido
-    setConfiguracao(atual)
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível carregar a configuração.'
-  }
-  finally {
-    carregando.value = false
-  }
+  },
+  created() {
+    useHead({ title: 'WhatsApp · Couto Imóveis' })
+    this.configurado = Boolean(this.$supabase)
+  },
+  mounted() {
+    this.carregar()
+  },
+  methods: {
+    async carregar() {
+      this.carregando = true
+      this.erro = ''
+      try {
+        const atual = await getConfiguracao(this.$supabase)
+        if (!atual) {
+          this.semLinha = true
+          return
+        }
+        this.numeroWhatsapp = atual.numeroWhatsapp
+        this.nomeExibido = atual.nomeExibido
+        setConfiguracao(atual)
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível carregar a configuração.'
+      }
+      finally {
+        this.carregando = false
+      }
+    },
+    async aoSalvar() {
+      this.aviso = ''
+      this.erro = ''
+      const mensagemNumero = validarNumeroWhatsapp(this.numeroWhatsapp)
+      if (mensagemNumero) {
+        this.erro = mensagemNumero
+        return
+      }
+      this.salvando = true
+      try {
+        const salva = await salvarConfiguracao(this.$supabase, this.numeroWhatsapp, this.nomeExibido)
+        this.numeroWhatsapp = salva.numeroWhatsapp
+        this.nomeExibido = salva.nomeExibido
+        setConfiguracao(salva)
+        this.aviso = 'WhatsApp salvo. Os anúncios já usam esse número.'
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível salvar.'
+      }
+      finally {
+        this.salvando = false
+      }
+    },
+  },
 }
-
-async function aoSalvar() {
-  aviso.value = ''
-  erro.value = ''
-  const mensagemNumero = validarNumeroWhatsapp(numeroWhatsapp.value)
-  if (mensagemNumero) {
-    erro.value = mensagemNumero
-    return
-  }
-  salvando.value = true
-  try {
-    const salva = await salvarConfiguracao(numeroWhatsapp.value, nomeExibido.value)
-    numeroWhatsapp.value = salva.numeroWhatsapp
-    nomeExibido.value = salva.nomeExibido
-    setConfiguracao(salva)
-    aviso.value = 'WhatsApp salvo. Os anúncios já usam esse número.'
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível salvar.'
-  }
-  finally {
-    salvando.value = false
-  }
-}
-
-onMounted(carregar)
 </script>
 
 <template>

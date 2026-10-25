@@ -1,10 +1,17 @@
-<script setup lang="ts">
-defineProps<{
-  error: {
-    statusCode?: number
-    message?: string
-  }
-}>()
+<script lang="ts">
+import type { PropType } from 'vue'
+
+export default {
+  props: {
+    error: {
+      type: Object as PropType<{
+        statusCode?: number
+        message?: string
+      }>,
+      default: () => ({}),
+    },
+  },
+}
 </script>
 
 <template>

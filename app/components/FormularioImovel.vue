@@ -1,15 +1,7 @@
-<script setup lang="ts">
+<script lang="ts">
+import type { PropType } from 'vue'
 import type { DadosImovel, Imovel, StatusImovel, TipoImovel } from '~/tipos/imovel'
-
-const propriedades = defineProps<{
-  imovelInicial?: Imovel | null
-  salvando?: boolean
-  rotuloSalvar?: string
-}>()
-
-const emitir = defineEmits<{
-  salvar: [dados: DadosImovel]
-}>()
+import { formatarPrecoEntrada, parsePrecoReais } from '~/utils/formatar'
 
 interface RascunhoFormulario {
   titulo: string
@@ -56,48 +48,60 @@ function criarRascunho(imovel?: Imovel | null): RascunhoFormulario {
   }
 }
 
-const rascunho = reactive(criarRascunho(propriedades.imovelInicial))
-const erros = ref<Record<string, string>>({})
-
-function inteiroValido(valor: number) {
-  return Number.isFinite(valor) && valor >= 0 && Number.isInteger(valor)
-}
-
-function validarFormulario() {
-  const encontrados: Record<string, string> = {}
-  if (!rascunho.titulo.trim()) encontrados.titulo = 'Informe o título.'
-  if (rascunho.tipo !== 'casa' && rascunho.tipo !== 'apartamento') encontrados.tipo = 'Escolha casa ou apartamento.'
-  if (!['rascunho', 'ativo', 'vendido'].includes(rascunho.status)) encontrados.status = 'Escolha o status.'
-  if (!rascunho.bairro.trim()) encontrados.bairro = 'Informe o bairro.'
-  if (!rascunho.cidade.trim()) encontrados.cidade = 'Informe a cidade.'
-  const precoCentavos = parsePrecoReais(rascunho.precoReais)
-  if (precoCentavos === null) encontrados.precoReais = 'Informe um preço válido.'
-  else if (precoCentavos <= 0) encontrados.precoReais = 'O preço precisa ser maior que zero.'
-  if (!inteiroValido(Number(rascunho.quartos))) encontrados.quartos = 'Informe os quartos com um número inteiro.'
-  if (!inteiroValido(Number(rascunho.banheiros))) encontrados.banheiros = 'Informe os banheiros com um número inteiro.'
-  if (!inteiroValido(Number(rascunho.vagas))) encontrados.vagas = 'Informe as vagas com um número inteiro.'
-  if (!Number.isFinite(Number(rascunho.areaM2)) || Number(rascunho.areaM2) < 0) encontrados.areaM2 = 'Informe a área em m².'
-  return encontrados
-}
-
-function aoEnviar() {
-  erros.value = validarFormulario()
-  if (Object.keys(erros.value).length) return
-  const precoCentavos = parsePrecoReais(rascunho.precoReais)
-  if (precoCentavos === null) return
-  emitir('salvar', {
-    titulo: rascunho.titulo.trim(),
-    tipo: rascunho.tipo,
-    status: rascunho.status,
-    precoCentavos,
-    descricao: rascunho.descricao.trim(),
-    bairro: rascunho.bairro.trim(),
-    cidade: rascunho.cidade.trim(),
-    quartos: Math.trunc(Number(rascunho.quartos)),
-    banheiros: Math.trunc(Number(rascunho.banheiros)),
-    vagas: Math.trunc(Number(rascunho.vagas)),
-    areaM2: Number(rascunho.areaM2),
-  })
+export default {
+  props: {
+    imovelInicial: { type: Object as PropType<Imovel | null>, default: null },
+    salvando: { type: Boolean, default: false },
+    rotuloSalvar: { type: String, default: 'Salvar imóvel' },
+  },
+  emits: ['salvar'],
+  data() {
+    return {
+      rascunho: criarRascunho(this.imovelInicial),
+      erros: {} as Record<string, string>,
+    }
+  },
+  methods: {
+    inteiroValido(valor: number) {
+      return Number.isFinite(valor) && valor >= 0 && Number.isInteger(valor)
+    },
+    validarFormulario() {
+      const encontrados: Record<string, string> = {}
+      if (!this.rascunho.titulo.trim()) encontrados.titulo = 'Informe o título.'
+      if (this.rascunho.tipo !== 'casa' && this.rascunho.tipo !== 'apartamento') encontrados.tipo = 'Escolha casa ou apartamento.'
+      if (!['rascunho', 'ativo', 'vendido'].includes(this.rascunho.status)) encontrados.status = 'Escolha o status.'
+      if (!this.rascunho.bairro.trim()) encontrados.bairro = 'Informe o bairro.'
+      if (!this.rascunho.cidade.trim()) encontrados.cidade = 'Informe a cidade.'
+      const precoCentavos = parsePrecoReais(this.rascunho.precoReais)
+      if (precoCentavos === null) encontrados.precoReais = 'Informe um preço válido.'
+      else if (precoCentavos <= 0) encontrados.precoReais = 'O preço precisa ser maior que zero.'
+      if (!this.inteiroValido(Number(this.rascunho.quartos))) encontrados.quartos = 'Informe os quartos com um número inteiro.'
+      if (!this.inteiroValido(Number(this.rascunho.banheiros))) encontrados.banheiros = 'Informe os banheiros com um número inteiro.'
+      if (!this.inteiroValido(Number(this.rascunho.vagas))) encontrados.vagas = 'Informe as vagas com um número inteiro.'
+      if (!Number.isFinite(Number(this.rascunho.areaM2)) || Number(this.rascunho.areaM2) < 0) encontrados.areaM2 = 'Informe a área em m².'
+      return encontrados
+    },
+    aoEnviar() {
+      this.erros = this.validarFormulario()
+      if (Object.keys(this.erros).length) return
+      const precoCentavos = parsePrecoReais(this.rascunho.precoReais)
+      if (precoCentavos === null) return
+      const dados: DadosImovel = {
+        titulo: this.rascunho.titulo.trim(),
+        tipo: this.rascunho.tipo,
+        status: this.rascunho.status,
+        precoCentavos,
+        descricao: this.rascunho.descricao.trim(),
+        bairro: this.rascunho.bairro.trim(),
+        cidade: this.rascunho.cidade.trim(),
+        quartos: Math.trunc(Number(this.rascunho.quartos)),
+        banheiros: Math.trunc(Number(this.rascunho.banheiros)),
+        vagas: Math.trunc(Number(this.rascunho.vagas)),
+        areaM2: Number(this.rascunho.areaM2),
+      }
+      this.$emit('salvar', dados)
+    },
+  },
 }
 </script>
 

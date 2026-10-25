@@ -1,72 +1,82 @@
-<script setup lang="ts">
+<script lang="ts">
+import type { PropType } from 'vue'
 import type { FotoImovel } from '~/tipos/imovel'
+import { enviarFotos, excluirFoto, moverFoto, setCapa } from '~/servicos/imoveis'
+import { getUrlFoto, validarFoto } from '~/utils/fotos'
 
-const propriedades = defineProps<{
-  imovelId: string
-  fotos: FotoImovel[]
-}>()
-
-const emitir = defineEmits<{
-  atualizado: []
-}>()
-
-const { cliente } = useClienteSupabase()
-const { enviarFotos, setCapa, moverFoto, excluirFoto } = useImoveis()
-const ocupado = ref(false)
-const erroFotos = ref('')
-const fotoParaExcluir = ref<FotoImovel | null>(null)
-
-const fotosOrdenadas = computed(() => [...propriedades.fotos].sort((fotoA, fotoB) => fotoA.ordem - fotoB.ordem))
-
-function urlDaFoto(caminho: string) {
-  if (!cliente) return ''
-  return getUrlFoto(cliente, caminho)
-}
-
-async function executar(acao: () => Promise<void>) {
-  ocupado.value = true
-  erroFotos.value = ''
-  try {
-    await acao()
-    emitir('atualizado')
-  }
-  catch (erroCapturado) {
-    erroFotos.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível atualizar as fotos.'
-  }
-  finally {
-    ocupado.value = false
-  }
-}
-
-async function adicionarFotos(evento: Event) {
-  const entrada = evento.target as HTMLInputElement
-  const arquivos = Array.from(entrada.files ?? [])
-  entrada.value = ''
-  if (!arquivos.length) return
-  const mensagens = arquivos.map((arquivo) => validarFoto(arquivo)).filter((mensagem): mensagem is string => Boolean(mensagem))
-  if (mensagens.length) {
-    erroFotos.value = mensagens[0] ?? ''
-    return
-  }
-  const maiorOrdem = fotosOrdenadas.value.reduce((maior, foto) => Math.max(maior, foto.ordem), -1)
-  const jaTemCapa = fotosOrdenadas.value.some((foto) => foto.capa)
-  await executar(() => enviarFotos(
-    propriedades.imovelId,
-    arquivos.map((arquivo) => ({ arquivo, capa: false })),
-    maiorOrdem + 1,
-    !jaTemCapa,
-  ))
-}
-
-function pedirExclusao(foto: FotoImovel) {
-  fotoParaExcluir.value = foto
-}
-
-async function confirmarExclusao() {
-  const foto = fotoParaExcluir.value
-  fotoParaExcluir.value = null
-  if (!foto) return
-  await executar(() => excluirFoto(foto))
+export default {
+  props: {
+    imovelId: { type: String, required: true },
+    fotos: { type: Array as PropType<FotoImovel[]>, required: true },
+  },
+  emits: ['atualizado'],
+  data() {
+    return {
+      ocupado: false,
+      erroFotos: '',
+      fotoParaExcluir: null as FotoImovel | null,
+    }
+  },
+  computed: {
+    fotosOrdenadas(): FotoImovel[] {
+      return [...this.fotos].sort((fotoA, fotoB) => fotoA.ordem - fotoB.ordem)
+    },
+  },
+  methods: {
+    urlDaFoto(caminho: string) {
+      if (!this.$supabase) return ''
+      return getUrlFoto(this.$supabase, caminho)
+    },
+    async executar(acao: () => Promise<void>) {
+      this.ocupado = true
+      this.erroFotos = ''
+      try {
+        await acao()
+        this.$emit('atualizado')
+      }
+      catch (erroCapturado) {
+        this.erroFotos = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível atualizar as fotos.'
+      }
+      finally {
+        this.ocupado = false
+      }
+    },
+    async adicionarFotos(evento: Event) {
+      const entrada = evento.target as HTMLInputElement
+      const arquivos = Array.from(entrada.files ?? [])
+      entrada.value = ''
+      if (!arquivos.length) return
+      const mensagens = arquivos.map((arquivo) => validarFoto(arquivo)).filter((mensagem): mensagem is string => Boolean(mensagem))
+      if (mensagens.length) {
+        this.erroFotos = mensagens[0] ?? ''
+        return
+      }
+      const maiorOrdem = this.fotosOrdenadas.reduce((maior, foto) => Math.max(maior, foto.ordem), -1)
+      const jaTemCapa = this.fotosOrdenadas.some((foto) => foto.capa)
+      await this.executar(() => enviarFotos(
+        this.$supabase,
+        this.imovelId,
+        arquivos.map((arquivo) => ({ arquivo, capa: false })),
+        maiorOrdem + 1,
+        !jaTemCapa,
+      ))
+    },
+    pedirExclusao(foto: FotoImovel) {
+      this.fotoParaExcluir = foto
+    },
+    async confirmarExclusao() {
+      const foto = this.fotoParaExcluir
+      this.fotoParaExcluir = null
+      if (!foto) return
+      await this.executar(() => excluirFoto(this.$supabase, foto))
+    },
+    definirCapa(fotoId: string) {
+      return this.executar(() => setCapa(this.$supabase, this.imovelId, fotoId))
+    },
+    mover(fotoId: string, direcao: 'subir' | 'descer') {
+      return this.executar(() => moverFoto(this.$supabase, this.fotos, fotoId, direcao))
+    },
+  },
 }
 </script>
 
@@ -87,13 +97,13 @@ async function confirmarExclusao() {
         <div class="flex flex-1 flex-col gap-2">
           <p v-if="foto.capa" class="text-xs font-medium uppercase tracking-wide text-terracota-700">Capa</p>
           <div class="flex flex-wrap gap-2">
-            <button type="button" class="inline-flex min-h-11 items-center rounded-full bg-floresta-800 px-3 text-sm text-areia-50 disabled:opacity-50" :disabled="ocupado || foto.capa" @click="executar(() => setCapa(imovelId, foto.id))">
+            <button type="button" class="inline-flex min-h-11 items-center rounded-full bg-floresta-800 px-3 text-sm text-areia-50 disabled:opacity-50" :disabled="ocupado || foto.capa" @click="definirCapa(foto.id)">
               Definir como capa
             </button>
-            <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-linha px-3 text-sm disabled:opacity-50" :disabled="ocupado || indice === 0" @click="executar(() => moverFoto(fotos, foto.id, 'subir'))">
+            <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-linha px-3 text-sm disabled:opacity-50" :disabled="ocupado || indice === 0" @click="mover(foto.id, 'subir')">
               Subir
             </button>
-            <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-linha px-3 text-sm disabled:opacity-50" :disabled="ocupado || indice === fotosOrdenadas.length - 1" @click="executar(() => moverFoto(fotos, foto.id, 'descer'))">
+            <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-linha px-3 text-sm disabled:opacity-50" :disabled="ocupado || indice === fotosOrdenadas.length - 1" @click="mover(foto.id, 'descer')">
               Descer
             </button>
             <button type="button" class="inline-flex min-h-11 items-center rounded-full border border-terracota-600 px-3 text-sm text-terracota-700 disabled:opacity-50" :disabled="ocupado" @click="pedirExclusao(foto)">

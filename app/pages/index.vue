@@ -1,50 +1,67 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { FiltroTipo, Imovel } from '~/tipos/imovel'
+import { mapActions, mapState } from 'pinia'
+import { useCatalogo } from '~/stores/catalogo'
+import { getImoveis } from '~/servicos/imoveis'
+import { filterPorTipo } from '~/utils/filterPorTipo'
 
-useHead({ title: 'Couto Imóveis' })
-
-const catalogo = useCatalogo()
-const { configurado } = useClienteSupabase()
-const { getImoveis } = useImoveis()
-
-const listaImoveis = ref<Imovel[]>([])
-const listaVendidos = ref<Imovel[]>([])
-const carregando = ref(true)
-const erro = ref('')
-
-const opcoesFiltro: Array<{ valor: FiltroTipo, rotulo: string }> = [
-  { valor: 'todos', rotulo: 'Todos' },
-  { valor: 'casa', rotulo: 'Casas' },
-  { valor: 'apartamento', rotulo: 'Apartamentos' },
-]
-
-const ativosVisiveis = computed(() => filterPorTipo(listaImoveis.value, catalogo.filtroTipo))
-const vendidosVisiveis = computed(() => filterPorTipo(listaVendidos.value, catalogo.filtroTipo))
-
-async function carregarCatalogo() {
-  if (!configurado.value) {
-    carregando.value = false
-    return
-  }
-  carregando.value = true
-  erro.value = ''
-  try {
-    const [ativos, vendidos] = await Promise.all([
-      getImoveis('ativo'),
-      getImoveis('vendido'),
-    ])
-    listaImoveis.value = ativos
-    listaVendidos.value = vendidos
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível carregar o catálogo.'
-  }
-  finally {
-    carregando.value = false
-  }
+export default {
+  data() {
+    return {
+      listaImoveis: [] as Imovel[],
+      listaVendidos: [] as Imovel[],
+      carregando: true,
+      erro: '',
+      configurado: false,
+      opcoesFiltro: [
+        { valor: 'todos', rotulo: 'Todos' },
+        { valor: 'casa', rotulo: 'Casas' },
+        { valor: 'apartamento', rotulo: 'Apartamentos' },
+      ] as Array<{ valor: FiltroTipo, rotulo: string }>,
+    }
+  },
+  computed: {
+    ...mapState(useCatalogo, ['filtroTipo']),
+    ativosVisiveis(): Imovel[] {
+      return filterPorTipo(this.listaImoveis, this.filtroTipo)
+    },
+    vendidosVisiveis(): Imovel[] {
+      return filterPorTipo(this.listaVendidos, this.filtroTipo)
+    },
+  },
+  created() {
+    useHead({ title: 'Couto Imóveis' })
+    this.configurado = Boolean(this.$supabase)
+  },
+  mounted() {
+    this.carregarCatalogo()
+  },
+  methods: {
+    ...mapActions(useCatalogo, ['setFiltroTipo']),
+    async carregarCatalogo() {
+      if (!this.configurado) {
+        this.carregando = false
+        return
+      }
+      this.carregando = true
+      this.erro = ''
+      try {
+        const [ativos, vendidos] = await Promise.all([
+          getImoveis(this.$supabase, 'ativo'),
+          getImoveis(this.$supabase, 'vendido'),
+        ])
+        this.listaImoveis = ativos
+        this.listaVendidos = vendidos
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível carregar o catálogo.'
+      }
+      finally {
+        this.carregando = false
+      }
+    },
+  },
 }
-
-onMounted(carregarCatalogo)
 </script>
 
 <template>
@@ -61,9 +78,9 @@ onMounted(carregarCatalogo)
         type="button"
         role="radio"
         class="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium"
-        :class="catalogo.filtroTipo === opcao.valor ? 'bg-floresta-800 text-areia-50' : 'bg-papel text-floresta-800 ring-1 ring-linha'"
-        :aria-checked="catalogo.filtroTipo === opcao.valor"
-        @click="catalogo.setFiltroTipo(opcao.valor)"
+        :class="filtroTipo === opcao.valor ? 'bg-floresta-800 text-areia-50' : 'bg-papel text-floresta-800 ring-1 ring-linha'"
+        :aria-checked="filtroTipo === opcao.valor"
+        @click="setFiltroTipo(opcao.valor)"
       >
         {{ opcao.rotulo }}
       </button>

@@ -1,91 +1,92 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { DadosImovel, FotoNova } from '~/tipos/imovel'
+import { enviarFotos, salvarImovel } from '~/servicos/imoveis'
+import { validarFoto } from '~/utils/fotos'
 
-definePageMeta({
-  layout: 'painel',
-  middleware: 'painel',
-})
-
-useHead({ title: 'Novo imóvel · Couto Imóveis' })
-
-const { configurado } = useClienteSupabase()
-const { salvarImovel, enviarFotos } = useImoveis()
-const roteador = useRouter()
-const fotosNovas = ref<FotoNova[]>([])
-const salvando = ref(false)
-const erro = ref('')
-const erroFotos = ref('')
-
-function adicionarFotosNovas(evento: Event) {
-  const entrada = evento.target as HTMLInputElement
-  const arquivos = Array.from(entrada.files ?? [])
-  entrada.value = ''
-  const mensagens: string[] = []
-  const aceitas: FotoNova[] = []
-  for (const arquivo of arquivos) {
-    const mensagem = validarFoto(arquivo)
-    if (mensagem) {
-      mensagens.push(mensagem)
-      continue
+export default {
+  data() {
+    return {
+      fotosNovas: [] as FotoNova[],
+      salvando: false,
+      erro: '',
+      erroFotos: '',
+      configurado: false,
     }
-    aceitas.push({
-      idLocal: crypto.randomUUID(),
-      arquivo,
-      previa: URL.createObjectURL(arquivo),
-      capa: false,
-    })
-  }
-  fotosNovas.value = [...fotosNovas.value, ...aceitas]
-  if (fotosNovas.value.length && !fotosNovas.value.some((fotoNova) => fotoNova.capa)) {
-    const primeira = fotosNovas.value[0]
-    if (primeira) primeira.capa = true
-  }
-  erroFotos.value = mensagens[0] ?? ''
+  },
+  created() {
+    useHead({ title: 'Novo imóvel · Couto Imóveis' })
+    this.configurado = Boolean(this.$supabase)
+  },
+  beforeUnmount() {
+    for (const fotoNova of this.fotosNovas) URL.revokeObjectURL(fotoNova.previa)
+  },
+  methods: {
+    adicionarFotosNovas(evento: Event) {
+      const entrada = evento.target as HTMLInputElement
+      const arquivos = Array.from(entrada.files ?? [])
+      entrada.value = ''
+      const mensagens: string[] = []
+      const aceitas: FotoNova[] = []
+      for (const arquivo of arquivos) {
+        const mensagem = validarFoto(arquivo)
+        if (mensagem) {
+          mensagens.push(mensagem)
+          continue
+        }
+        aceitas.push({
+          idLocal: crypto.randomUUID(),
+          arquivo,
+          previa: URL.createObjectURL(arquivo),
+          capa: false,
+        })
+      }
+      this.fotosNovas = [...this.fotosNovas, ...aceitas]
+      if (this.fotosNovas.length && !this.fotosNovas.some((fotoNova) => fotoNova.capa)) {
+        const primeira = this.fotosNovas[0]
+        if (primeira) primeira.capa = true
+      }
+      this.erroFotos = mensagens[0] ?? ''
+    },
+    setCapaNova(idLocal: string) {
+      this.fotosNovas = this.fotosNovas.map((fotoNova) => ({
+        ...fotoNova,
+        capa: fotoNova.idLocal === idLocal,
+      }))
+    },
+    removerFotoNova(idLocal: string) {
+      const foto = this.fotosNovas.find((fotoNova) => fotoNova.idLocal === idLocal)
+      if (foto) URL.revokeObjectURL(foto.previa)
+      this.fotosNovas = this.fotosNovas.filter((fotoNova) => fotoNova.idLocal !== idLocal)
+      if (this.fotosNovas.length && !this.fotosNovas.some((fotoNova) => fotoNova.capa)) {
+        const primeira = this.fotosNovas[0]
+        if (primeira) primeira.capa = true
+      }
+    },
+    async aoSalvar(dados: DadosImovel) {
+      this.salvando = true
+      this.erro = ''
+      try {
+        const imovel = await salvarImovel(this.$supabase, dados)
+        if (this.fotosNovas.length) {
+          await enviarFotos(
+            this.$supabase,
+            imovel.id,
+            this.fotosNovas.map((fotoNova) => ({ arquivo: fotoNova.arquivo, capa: fotoNova.capa })),
+            0,
+            true,
+          )
+        }
+        await this.$router.push(`/admin/imoveis/${imovel.id}`)
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível salvar o imóvel.'
+      }
+      finally {
+        this.salvando = false
+      }
+    },
+  },
 }
-
-function setCapaNova(idLocal: string) {
-  fotosNovas.value = fotosNovas.value.map((fotoNova) => ({
-    ...fotoNova,
-    capa: fotoNova.idLocal === idLocal,
-  }))
-}
-
-function removerFotoNova(idLocal: string) {
-  const foto = fotosNovas.value.find((fotoNova) => fotoNova.idLocal === idLocal)
-  if (foto) URL.revokeObjectURL(foto.previa)
-  fotosNovas.value = fotosNovas.value.filter((fotoNova) => fotoNova.idLocal !== idLocal)
-  if (fotosNovas.value.length && !fotosNovas.value.some((fotoNova) => fotoNova.capa)) {
-    const primeira = fotosNovas.value[0]
-    if (primeira) primeira.capa = true
-  }
-}
-
-async function aoSalvar(dados: DadosImovel) {
-  salvando.value = true
-  erro.value = ''
-  try {
-    const imovel = await salvarImovel(dados)
-    if (fotosNovas.value.length) {
-      await enviarFotos(
-        imovel.id,
-        fotosNovas.value.map((fotoNova) => ({ arquivo: fotoNova.arquivo, capa: fotoNova.capa })),
-        0,
-        true,
-      )
-    }
-    await roteador.push(`/admin/imoveis/${imovel.id}`)
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível salvar o imóvel.'
-  }
-  finally {
-    salvando.value = false
-  }
-}
-
-onBeforeUnmount(() => {
-  for (const fotoNova of fotosNovas.value) URL.revokeObjectURL(fotoNova.previa)
-})
 </script>
 
 <template>

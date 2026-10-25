@@ -1,16 +1,20 @@
-<script setup lang="ts">
+<script lang="ts">
+import type { PropType } from 'vue'
 import type { Imovel } from '~/tipos/imovel'
+import { getCapa, getUrlFoto } from '~/utils/fotos'
 
-const propriedades = defineProps<{
-  imovel: Imovel
-}>()
-
-const { cliente } = useClienteSupabase()
-const capaAtual = computed(() => getCapa(propriedades.imovel.fotos))
-const urlCapa = computed(() => {
-  if (!cliente || !capaAtual.value) return ''
-  return getUrlFoto(cliente, capaAtual.value.caminho)
-})
+export default {
+  props: {
+    imovel: { type: Object as PropType<Imovel>, required: true },
+  },
+  computed: {
+    urlCapa(): string {
+      const capaAtual = getCapa(this.imovel.fotos)
+      if (!this.$supabase || !capaAtual) return ''
+      return getUrlFoto(this.$supabase, capaAtual.caminho)
+    },
+  },
+}
 </script>
 
 <template>

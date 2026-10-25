@@ -1,57 +1,61 @@
-<script setup lang="ts">
+<script lang="ts">
 import type { Imovel } from '~/tipos/imovel'
+import { excluirImovel, getImoveis } from '~/servicos/imoveis'
 
-definePageMeta({
-  layout: 'painel',
-  middleware: 'painel',
-})
-
-useHead({ title: 'Painel · Couto Imóveis' })
-
-const { configurado } = useClienteSupabase()
-const { getImoveis, excluirImovel } = useImoveis()
-const listaImoveis = ref<Imovel[]>([])
-const carregando = ref(true)
-const erro = ref('')
-const imovelParaExcluir = ref<Imovel | null>(null)
-const excluindo = ref(false)
-
-async function carregarPainel() {
-  if (!configurado.value) {
-    carregando.value = false
-    return
-  }
-  carregando.value = true
-  erro.value = ''
-  try {
-    listaImoveis.value = await getImoveis()
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível listar os imóveis.'
-  }
-  finally {
-    carregando.value = false
-  }
+export default {
+  data() {
+    return {
+      listaImoveis: [] as Imovel[],
+      carregando: true,
+      erro: '',
+      imovelParaExcluir: null as Imovel | null,
+      excluindo: false,
+      configurado: false,
+    }
+  },
+  created() {
+    useHead({ title: 'Painel · Couto Imóveis' })
+    this.configurado = Boolean(this.$supabase)
+  },
+  mounted() {
+    this.carregarPainel()
+  },
+  methods: {
+    async carregarPainel() {
+      if (!this.configurado) {
+        this.carregando = false
+        return
+      }
+      this.carregando = true
+      this.erro = ''
+      try {
+        this.listaImoveis = await getImoveis(this.$supabase)
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível listar os imóveis.'
+      }
+      finally {
+        this.carregando = false
+      }
+    },
+    async confirmarExclusao() {
+      const imovel = this.imovelParaExcluir
+      this.imovelParaExcluir = null
+      if (!imovel) return
+      this.excluindo = true
+      try {
+        await excluirImovel(this.$supabase, imovel)
+        this.listaImoveis = this.listaImoveis.filter((anuncio) => anuncio.id !== imovel.id)
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível excluir.'
+      }
+      finally {
+        this.excluindo = false
+      }
+    },
+  },
 }
-
-async function confirmarExclusao() {
-  const imovel = imovelParaExcluir.value
-  imovelParaExcluir.value = null
-  if (!imovel) return
-  excluindo.value = true
-  try {
-    await excluirImovel(imovel)
-    listaImoveis.value = listaImoveis.value.filter((anuncio) => anuncio.id !== imovel.id)
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível excluir.'
-  }
-  finally {
-    excluindo.value = false
-  }
-}
-
-onMounted(carregarPainel)
 </script>
 
 <template>

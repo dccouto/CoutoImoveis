@@ -1,36 +1,44 @@
-<script setup lang="ts">
-useHead({ title: 'Entrar · Couto Imóveis' })
+<script lang="ts">
+import { carregarSessao, entrar } from '~/estado/sessao'
 
-const { configurado } = useClienteSupabase()
-const { entrar, carregarSessao } = useSessao()
-const roteador = useRouter()
-const email = ref('')
-const senha = ref('')
-const enviando = ref(false)
-const erro = ref('')
-
-onMounted(async () => {
-  const sessao = await carregarSessao()
-  if (sessao) await roteador.replace('/admin')
-})
-
-async function aoEntrar() {
-  erro.value = ''
-  if (!email.value.trim() || !senha.value) {
-    erro.value = 'Informe o e-mail e a senha.'
-    return
-  }
-  enviando.value = true
-  try {
-    await entrar(email.value.trim(), senha.value)
-    await roteador.replace('/admin')
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível entrar.'
-  }
-  finally {
-    enviando.value = false
-  }
+export default {
+  data() {
+    return {
+      email: '',
+      senha: '',
+      enviando: false,
+      erro: '',
+      configurado: false,
+    }
+  },
+  created() {
+    useHead({ title: 'Entrar · Couto Imóveis' })
+    this.configurado = Boolean(this.$supabase)
+  },
+  async mounted() {
+    const sessao = await carregarSessao(this.$supabase)
+    if (sessao) await this.$router.replace('/admin')
+  },
+  methods: {
+    async aoEntrar() {
+      this.erro = ''
+      if (!this.email.trim() || !this.senha) {
+        this.erro = 'Informe o e-mail e a senha.'
+        return
+      }
+      this.enviando = true
+      try {
+        await entrar(this.$supabase, this.email.trim(), this.senha)
+        await this.$router.replace('/admin')
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível entrar.'
+      }
+      finally {
+        this.enviando = false
+      }
+    },
+  },
 }
 </script>
 

@@ -1,66 +1,100 @@
-<script setup lang="ts">
-import type { Imovel } from '~/tipos/imovel'
+<script lang="ts">
+import type { Imovel, ItemGaleria } from '~/tipos/imovel'
+import { carregarConfiguracao, estadoConfiguracao } from '~/estado/configuracaoPublica'
+import { carregarSessao, estadoSessao } from '~/estado/sessao'
+import { getImovel } from '~/servicos/imoveis'
+import { getCapa, getUrlFoto } from '~/utils/fotos'
 
-const rota = useRoute()
-const { configurado, cliente } = useClienteSupabase()
-const { getImovel } = useImoveis()
-const { configuracao, carregarConfiguracao } = useConfiguracaoPublica()
-const { getUrlAbsoluta } = useUrlPublica()
-const { usuarioEmail, carregarSessao } = useSessao()
-
-const idImovel = computed(() => String(rota.params.id || ''))
-const imovelSelecionado = ref<Imovel | null>(null)
-const carregando = ref(true)
-const erro = ref('')
-
-const capaAtual = computed(() => imovelSelecionado.value ? getCapa(imovelSelecionado.value.fotos) : null)
-const urlCapa = computed(() => {
-  if (!cliente || !capaAtual.value) return null
-  return getUrlFoto(cliente, capaAtual.value.caminho)
-})
-const urlPagina = computed(() => getUrlAbsoluta(`/imovel/${idImovel.value}`))
-const itensGaleria = computed(() => {
-  const imovel = imovelSelecionado.value
-  if (!cliente || !imovel) return []
-  return imovel.fotos.map((foto, indice) => ({
-    id: foto.id,
-    url: getUrlFoto(cliente, foto.caminho),
-    alt: `${imovel.titulo} — foto ${indice + 1}`,
-  }))
-})
-
-useHead({ title: computed(() => imovelSelecionado.value?.titulo || 'Imóvel') })
-
-async function carregarImovel() {
-  if (!configurado.value) {
-    carregando.value = false
-    return
-  }
-  carregando.value = true
-  erro.value = ''
-  try {
-    await carregarConfiguracao()
-    imovelSelecionado.value = await getImovel(idImovel.value)
-    if (!imovelSelecionado.value) erro.value = 'Imóvel não encontrado.'
-  }
-  catch (erroCapturado) {
-    erro.value = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível abrir o imóvel.'
-  }
-  finally {
-    carregando.value = false
-  }
+export default {
+  data() {
+    return {
+      imovelSelecionado: null as Imovel | null,
+      carregando: true,
+      erro: '',
+      configurado: false,
+    }
+  },
+  computed: {
+    idImovel(): string {
+      return String(this.$route.params.id || '')
+    },
+    usuarioEmail(): string | null {
+      return estadoSessao.usuarioEmail
+    },
+    numeroWhatsapp(): string {
+      return estadoConfiguracao.numeroWhatsapp
+    },
+    capaAtual() {
+      return this.imovelSelecionado ? getCapa(this.imovelSelecionado.fotos) : null
+    },
+    urlCapa(): string | null {
+      if (!this.$supabase || !this.capaAtual) return null
+      return getUrlFoto(this.$supabase, this.capaAtual.caminho)
+    },
+    urlPagina(): string {
+      const href = this.$router.resolve(`/imovel/${this.idImovel}`).href
+      if (!import.meta.client) return href
+      return new URL(href, window.location.origin).href
+    },
+    itensGaleria(): ItemGaleria[] {
+      const imovel = this.imovelSelecionado
+      if (!this.$supabase || !imovel) return []
+      return imovel.fotos.map((foto, indice) => ({
+        id: foto.id,
+        url: getUrlFoto(this.$supabase, foto.caminho),
+        alt: `${imovel.titulo} — foto ${indice + 1}`,
+      }))
+    },
+  },
+  watch: {
+    idImovel(idNovo, idAntigo) {
+      if (!idAntigo || idNovo === idAntigo) return
+      this.carregarImovel()
+    },
+    imovelSelecionado() {
+      this.definirTitulo()
+    },
+  },
+  created() {
+    this.configurado = Boolean(this.$supabase)
+    this.definirTitulo()
+  },
+  mounted() {
+    carregarSessao(this.$supabase)
+    this.carregarImovel()
+  },
+  methods: {
+    definirTitulo() {
+      const titulo = this.imovelSelecionado?.titulo || 'Imóvel'
+      useHead({ title: titulo })
+      if (import.meta.client) document.title = titulo
+    },
+    async carregarImovel() {
+      if (!this.configurado) {
+        this.carregando = false
+        return
+      }
+      this.carregando = true
+      this.erro = ''
+      try {
+        await carregarConfiguracao(this.$supabase)
+        this.imovelSelecionado = await getImovel(this.$supabase, this.idImovel)
+        if (!this.imovelSelecionado) this.erro = 'Imóvel não encontrado.'
+      }
+      catch (erroCapturado) {
+        this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível abrir o imóvel.'
+      }
+      finally {
+        this.carregando = false
+      }
+    },
+  },
 }
-
-onMounted(() => {
-  carregarSessao()
-  carregarImovel()
-})
-watch(idImovel, carregarImovel)
 </script>
 
 <template>
   <AvisoSupabase v-if="!configurado" />
-  <div v-else class="mx-auto w-full max-w-6xl px-4 py-6 pb-40 md:pb-10">
+  <div v-else class="mx-auto w-full max-w-6xl px-4 py-6 pb-80 md:pb-10">
     <NuxtLink to="/" class="inline-flex min-h-11 items-center text-sm text-floresta-800">← Catálogo</NuxtLink>
     <p v-if="carregando" class="mt-8 text-apagado">Carregando imóvel…</p>
     <div v-else-if="erro" class="mt-8 max-w-xl rounded-3xl bg-papel p-5 ring-1 ring-linha" role="alert">
@@ -112,13 +146,18 @@ watch(idImovel, carregarImovel)
         Editar no painel
       </NuxtLink>
       <div class="fixed inset-x-0 bottom-0 z-30 border-t border-linha bg-papel/95 p-3 backdrop-blur md:static md:mt-8 md:border-0 md:bg-transparent md:p-0">
-        <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:flex-row">
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:flex-row sm:flex-wrap">
           <BotaoFalarWhatsapp
             :imovel="imovelSelecionado"
-            :numero-whatsapp="configuracao.numeroWhatsapp"
+            :numero-whatsapp="numeroWhatsapp"
             :url-pagina="urlPagina"
           />
           <BotaoCompartilharWhatsapp
+            :imovel="imovelSelecionado"
+            :url-capa="urlCapa"
+            :url-pagina="urlPagina"
+          />
+          <BotaoCompartilharFacebook
             :imovel="imovelSelecionado"
             :url-capa="urlCapa"
             :url-pagina="urlPagina"

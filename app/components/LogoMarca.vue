@@ -1,19 +1,26 @@
-<script setup lang="ts">
-const propriedades = defineProps<{
-  nome?: string
-  tom?: 'claro' | 'escuro'
-}>()
-
-const nomeVisivel = computed(() => propriedades.nome?.trim() || 'Couto Imóveis')
-const partesNome = computed(() => {
-  const corte = nomeVisivel.value.indexOf(' ')
-  if (corte <= 0) return { primeira: nomeVisivel.value, resto: '' }
-  return {
-    primeira: nomeVisivel.value.slice(0, corte),
-    resto: nomeVisivel.value.slice(corte + 1),
-  }
-})
-const clara = computed(() => propriedades.tom !== 'escuro')
+<script lang="ts">
+export default {
+  props: {
+    nome: { type: String, default: '' },
+    tom: { type: String, default: 'claro' },
+  },
+  computed: {
+    nomeVisivel(): string {
+      return this.nome.trim() || 'Couto Imóveis'
+    },
+    partesNome(): { primeira: string, resto: string } {
+      const corte = this.nomeVisivel.indexOf(' ')
+      if (corte <= 0) return { primeira: this.nomeVisivel, resto: '' }
+      return {
+        primeira: this.nomeVisivel.slice(0, corte),
+        resto: this.nomeVisivel.slice(corte + 1),
+      }
+    },
+    clara(): boolean {
+      return this.tom !== 'escuro'
+    },
+  },
+}
 </script>
 
 <template>

@@ -1,20 +1,32 @@
-<script setup lang="ts">
+<script lang="ts">
+import type { PropType } from 'vue'
 import type { ItemGaleria } from '~/tipos/imovel'
 
-const propriedades = defineProps<{
-  itens: ItemGaleria[]
-  titulo: string
-}>()
-
-const indiceAtual = ref(0)
-const fotoAtual = computed(() => propriedades.itens[indiceAtual.value] ?? null)
-
-watch(() => propriedades.itens.length, () => {
-  indiceAtual.value = 0
-})
-
-function selecionarFoto(indice: number) {
-  indiceAtual.value = indice
+export default {
+  props: {
+    itens: { type: Array as PropType<ItemGaleria[]>, required: true },
+    titulo: { type: String, required: true },
+  },
+  data() {
+    return {
+      indiceAtual: 0,
+    }
+  },
+  computed: {
+    fotoAtual(): ItemGaleria | null {
+      return this.itens[this.indiceAtual] ?? null
+    },
+  },
+  watch: {
+    'itens.length'() {
+      this.indiceAtual = 0
+    },
+  },
+  methods: {
+    selecionarFoto(indice: number) {
+      this.indiceAtual = indice
+    },
+  },
 }
 </script>
 
