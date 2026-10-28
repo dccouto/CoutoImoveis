@@ -1,6 +1,7 @@
 export type TipoImovel = 'casa' | 'apartamento'
 export type StatusImovel = 'rascunho' | 'ativo' | 'vendido'
 export type FiltroTipo = 'todos' | TipoImovel
+export type OrdenacaoCatalogo = 'preco_menor' | 'preco_maior' | 'tipo_casa' | 'tipo_apartamento'
 
 export interface FotoImovel {
   id: string
