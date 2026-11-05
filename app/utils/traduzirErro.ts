@@ -8,7 +8,7 @@ export function traduzirErro(erro: { code?: string, message?: string } | null | 
     || mensagem.includes('schema cache')
     || mensagem.includes('does not exist')
   ) {
-    return 'As tabelas ainda não existem. Cole supabase/migrations/0001_imoveis.sql no SQL Editor de um projeto Supabase vazio.'
+    return 'Falta schema no Supabase. Em projeto novo, cole 0001_imoveis.sql e 0002_link_maps.sql. Se a tabela já existir, cole só 0002_link_maps.sql no SQL Editor.'
   }
 
   if (codigo === 'PGRST116') {

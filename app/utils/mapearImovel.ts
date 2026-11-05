@@ -36,6 +36,7 @@ export function mapearImovel(linha: LinhaImovel): Imovel {
     banheiros: Number(linha.banheiros) || 0,
     vagas: Number(linha.vagas) || 0,
     areaM2: Number(linha.area_m2) || 0,
+    linkMaps: (linha.link_maps ?? '').trim(),
     criadoEm: linha.criado_em,
     atualizadoEm: linha.atualizado_em,
     fotos,
@@ -63,5 +64,6 @@ export function paraColunasImovel(dados: DadosImovel) {
     banheiros: dados.banheiros,
     vagas: dados.vagas,
     area_m2: dados.areaM2,
+    link_maps: dados.linkMaps.trim(),
   }
 }

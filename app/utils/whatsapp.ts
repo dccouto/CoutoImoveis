@@ -28,6 +28,8 @@ export function montarLegendaWhatsapp(imovel: Imovel, urlPagina: string): string
   ]
   if (descricaoCurta) linhas.push('', descricaoCurta)
   linhas.push('', `Veja as fotos: ${urlPagina}`)
+  const linkMaps = imovel.linkMaps.trim()
+  if (linkMaps) linhas.push(`Mapa: ${linkMaps}`)
   return linhas.join('\n')
 }
 

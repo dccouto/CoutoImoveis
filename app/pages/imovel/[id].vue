@@ -113,6 +113,15 @@ export default {
           </div>
           <h1 class="mt-2 max-w-3xl font-serif text-3xl leading-[1.08] text-floresta-900 sm:text-5xl">{{ imovelSelecionado.titulo }}</h1>
           <p class="mt-2 text-lg text-apagado">{{ imovelSelecionado.bairro }} · {{ imovelSelecionado.cidade }}</p>
+          <a
+            v-if="imovelSelecionado.linkMaps"
+            :href="imovelSelecionado.linkMaps"
+            target="_blank"
+            rel="noopener"
+            class="mt-3 inline-flex min-h-11 items-center rounded-full border border-floresta-800 px-4 text-floresta-800"
+          >
+            Ver no mapa
+          </a>
         </div>
         <p class="font-serif text-4xl text-terracota-700">{{ formatarPreco(imovelSelecionado.precoCentavos) }}</p>
       </div>

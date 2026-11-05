@@ -24,6 +24,7 @@ export interface Imovel {
   banheiros: number
   vagas: number
   areaM2: number
+  linkMaps: string
   criadoEm: string
   atualizadoEm: string
   fotos: FotoImovel[]
@@ -41,6 +42,7 @@ export interface DadosImovel {
   banheiros: number
   vagas: number
   areaM2: number
+  linkMaps: string
 }
 
 export interface Configuracao {
@@ -88,6 +90,7 @@ export interface LinhaImovel {
   banheiros: number | string
   vagas: number | string
   area_m2: number | string
+  link_maps?: string | null
   criado_em: string
   atualizado_em: string
   fotos_imovel?: LinhaFoto[] | null

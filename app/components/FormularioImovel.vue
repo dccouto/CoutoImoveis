@@ -15,6 +15,13 @@ interface RascunhoFormulario {
   banheiros: number
   vagas: number
   areaM2: number
+  linkMaps: string
+}
+
+function linkMapsValido(linkMaps: string) {
+  const valor = linkMaps.trim()
+  if (!valor) return true
+  return /^https?:\/\//i.test(valor)
 }
 
 function criarRascunho(imovel?: Imovel | null): RascunhoFormulario {
@@ -31,6 +38,7 @@ function criarRascunho(imovel?: Imovel | null): RascunhoFormulario {
       banheiros: 0,
       vagas: 0,
       areaM2: 0,
+      linkMaps: '',
     }
   }
   return {
@@ -45,6 +53,7 @@ function criarRascunho(imovel?: Imovel | null): RascunhoFormulario {
     banheiros: imovel.banheiros,
     vagas: imovel.vagas,
     areaM2: imovel.areaM2,
+    linkMaps: imovel.linkMaps,
   }
 }
 
@@ -79,6 +88,9 @@ export default {
       if (!this.inteiroValido(Number(this.rascunho.banheiros))) encontrados.banheiros = 'Informe os banheiros com um número inteiro.'
       if (!this.inteiroValido(Number(this.rascunho.vagas))) encontrados.vagas = 'Informe as vagas com um número inteiro.'
       if (!Number.isFinite(Number(this.rascunho.areaM2)) || Number(this.rascunho.areaM2) < 0) encontrados.areaM2 = 'Informe a área em m².'
+      if (!linkMapsValido(this.rascunho.linkMaps)) {
+        encontrados.linkMaps = 'O link do Maps deve começar com http:// ou https://.'
+      }
       return encontrados
     },
     aoEnviar() {
@@ -98,6 +110,7 @@ export default {
         banheiros: Math.trunc(Number(this.rascunho.banheiros)),
         vagas: Math.trunc(Number(this.rascunho.vagas)),
         areaM2: Number(this.rascunho.areaM2),
+        linkMaps: this.rascunho.linkMaps.trim(),
       }
       this.$emit('salvar', dados)
     },
@@ -150,6 +163,21 @@ export default {
         <input id="cidade" v-model="rascunho.cidade" required class="min-h-12 w-full rounded-2xl border border-linha bg-papel px-3" autocomplete="off">
         <p v-if="erros.cidade" class="mt-1 text-sm text-terracota-700" role="alert">{{ erros.cidade }}</p>
       </div>
+    </div>
+
+    <div>
+      <label class="mb-1 block text-sm font-medium" for="linkMaps">Link do Google Maps</label>
+      <input
+        id="linkMaps"
+        v-model="rascunho.linkMaps"
+        type="url"
+        inputmode="url"
+        placeholder="https://maps.app.goo.gl/… ou https://maps.google.com/…"
+        class="min-h-12 w-full rounded-2xl border border-linha bg-papel px-3"
+        autocomplete="off"
+      >
+      <p class="mt-1 text-sm text-apagado">Opcional. Aceita links de maps.google.com, goo.gl e maps.app.goo.gl.</p>
+      <p v-if="erros.linkMaps" class="mt-1 text-sm text-terracota-700" role="alert">{{ erros.linkMaps }}</p>
     </div>
 
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
