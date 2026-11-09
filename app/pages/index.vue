@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { FiltroTipo, Imovel, OrdenacaoCatalogo } from '~/tipos/imovel'
 import { mapActions, mapState } from 'pinia'
+import { carregarConfiguracao, estadoConfiguracao } from '~/estado/configuracaoPublica'
 import { useCatalogo } from '~/stores/catalogo'
 import { getImoveis } from '~/servicos/imoveis'
 import { filterPorTipo } from '~/utils/filterPorTipo'
@@ -11,6 +12,7 @@ export default {
     return {
       listaImoveis: [] as Imovel[],
       listaVendidos: [] as Imovel[],
+      exibirVendidos: true,
       carregando: true,
       erro: '',
       configurado: false,
@@ -35,6 +37,7 @@ export default {
       return ordenarImoveis(filtrados, this.ordenacao)
     },
     vendidosVisiveis(): Imovel[] {
+      if (!this.exibirVendidos) return []
       const filtrados = filterPorTipo(this.listaVendidos, this.filtroTipo)
       return ordenarImoveis(filtrados, this.ordenacao)
     },
@@ -56,12 +59,16 @@ export default {
       this.carregando = true
       this.erro = ''
       try {
-        const [ativos, vendidos] = await Promise.all([
-          getImoveis(this.$supabase, 'ativo'),
-          getImoveis(this.$supabase, 'vendido'),
-        ])
+        await carregarConfiguracao(this.$supabase)
+        this.exibirVendidos = estadoConfiguracao.exibirVendidos
+        const ativos = await getImoveis(this.$supabase, 'ativo')
         this.listaImoveis = ativos
-        this.listaVendidos = vendidos
+        if (this.exibirVendidos) {
+          this.listaVendidos = await getImoveis(this.$supabase, 'vendido')
+        }
+        else {
+          this.listaVendidos = []
+        }
       }
       catch (erroCapturado) {
         this.erro = erroCapturado instanceof Error ? erroCapturado.message : 'Não foi possível carregar o catálogo.'

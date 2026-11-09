@@ -48,6 +48,8 @@ export function mapearConfiguracao(linha: LinhaConfiguracao): Configuracao {
     id: linha.id,
     numeroWhatsapp: linha.numero_whatsapp ?? '',
     nomeExibido: linha.nome_exibido?.trim() || 'Couto Imóveis',
+    // Default true se a coluna 0003 ainda não existir no banco.
+    exibirVendidos: linha.exibir_vendidos !== false,
   }
 }
 

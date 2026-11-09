@@ -38,7 +38,7 @@ export default {
             Imóveis
           </NuxtLink>
           <NuxtLink to="/admin/configuracoes" class="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-2.5 text-sm hover:bg-white/10 sm:px-3">
-            WhatsApp
+            Configurações
           </NuxtLink>
           <NuxtLink to="/" class="inline-flex h-11 shrink-0 items-center whitespace-nowrap rounded-full px-2.5 text-sm hover:bg-white/10 sm:px-3">
             Ver site

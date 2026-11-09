@@ -7,6 +7,7 @@ export const estadoConfiguracao = reactive({
   id: 1,
   numeroWhatsapp: '',
   nomeExibido: 'Couto Imóveis',
+  exibirVendidos: true,
   carregada: false,
 })
 
@@ -16,6 +17,7 @@ export function setConfiguracao(valor: Configuracao) {
   estadoConfiguracao.id = valor.id
   estadoConfiguracao.numeroWhatsapp = valor.numeroWhatsapp
   estadoConfiguracao.nomeExibido = valor.nomeExibido
+  estadoConfiguracao.exibirVendidos = valor.exibirVendidos
   estadoConfiguracao.carregada = true
 }
 

@@ -49,6 +49,7 @@ export interface Configuracao {
   id: number
   numeroWhatsapp: string
   nomeExibido: string
+  exibirVendidos: boolean
 }
 
 export interface FotoNova {
@@ -100,4 +101,5 @@ export interface LinhaConfiguracao {
   id: number
   numero_whatsapp: string | null
   nome_exibido: string | null
+  exibir_vendidos?: boolean | null
 }

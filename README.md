@@ -15,16 +15,20 @@ Não há React neste projeto. Não há API Nitro obrigatória: o navegador fala 
 1. Crie um projeto em [supabase.com](https://supabase.com).
 2. Abra o **SQL Editor** e cole o arquivo `supabase/migrations/0001_imoveis.sql` **inteiro**, num projeto ainda vazio. Esse script cria as tabelas `imoveis`, `fotos_imovel` e `configuracoes`, o bucket público `imoveis` e as políticas de segurança (RLS).
 3. Ainda no **SQL Editor**, cole também `supabase/migrations/0002_link_maps.sql`. Esse script adiciona a coluna `link_maps` (URL do Google Maps) na tabela `imoveis`.
-4. Em **Authentication → Users**, crie o usuário administrador (e-mail e senha). É com ele que o painel entra. O site não tem senha própria.
-5. Em **Project Settings → API**, copie a URL do projeto e a chave **anon / publishable**. Não use `service_role` em lugar nenhum.
+4. Ainda no **SQL Editor**, cole `supabase/migrations/0003_exibir_vendidos.sql`. Esse script adiciona a coluna `exibir_vendidos` (boolean, default `true`) em `configuracoes`, para o painel controlar se a seção Vendidos aparece na página inicial.
+5. Em **Authentication → Users**, crie o usuário administrador (e-mail e senha). É com ele que o painel entra. O site não tem senha própria.
+6. Em **Project Settings → API**, copie a URL do projeto e a chave **anon / publishable**. Não use `service_role` em lugar nenhum.
 
 ### Tabela já existente em produção
 
-Se o projeto Supabase já rodou o `0001` e a tabela `imoveis` já existe, **não rode o `0001` de novo**. Cole só `supabase/migrations/0002_link_maps.sql` no SQL Editor:
+Se o projeto Supabase já rodou o `0001` e a tabela `imoveis` já existe, **não rode o `0001` de novo**. Cole no SQL Editor o que ainda faltar:
+
+1. Se ainda não rodou o `0002`: `supabase/migrations/0002_link_maps.sql`
+2. Cole `supabase/migrations/0003_exibir_vendidos.sql`:
 
 ```sql
-alter table public.imoveis
-  add column if not exists link_maps text not null default '';
+alter table public.configuracoes
+  add column if not exists exibir_vendidos boolean not null default true;
 ```
 
 A chave anon/publishable do site não altera schema — o SQL precisa ser aplicado manualmente no painel do Supabase.
@@ -76,7 +80,7 @@ A Action define `NUXT_APP_BASE_URL` como `/<nome-do-repo>/`, que é o caminho de
 ## O que o público vê
 
 - Catálogo só com imóveis **ativos**, filtro todos / casas / apartamentos.
-- Seção discreta **Vendidos**.
+- Seção discreta **Vendidos** (só se `configuracoes.exibir_vendidos` estiver ligado; padrão ligado).
 - **Rascunho** não aparece para quem não está logado.
 - Página do imóvel com galeria, descrição, preço em reais e, se cadastrado, o link **Ver no mapa** (Google Maps).
 - **Falar no WhatsApp** abre `https://wa.me/<número>?text=` com a mensagem daquele imóvel. O número vem de `configuracoes.numero_whatsapp`. Se estiver vazio, o botão explica que o contato será ativado quando o anunciante salvar o WhatsApp. Se o número não começar com 55, o site acrescenta o código do Brasil.
@@ -107,4 +111,4 @@ O link `wa.me` não envia foto. A foto só entra em `navigator.share({ files })`
 
 ## Painel
 
-Em `/admin/login`, entre com o e-mail e a senha do Supabase Auth. Dá para criar, editar, marcar como rascunho, ativo ou vendido, informar o link opcional do Google Maps, definir a capa, reordenar fotos e excluir com confirmação. Em `/admin/configuracoes` fica o número de WhatsApp e o nome exibido (padrão “Couto Imóveis”).
+Em `/admin/login`, entre com o e-mail e a senha do Supabase Auth. Dá para criar, editar, marcar como rascunho, ativo ou vendido, informar o link opcional do Google Maps, definir a capa, reordenar fotos e excluir com confirmação. Em `/admin/configuracoes` ficam o número de WhatsApp, o nome exibido (padrão “Couto Imóveis”) e o toggle **Exibir vendidos** da página inicial.

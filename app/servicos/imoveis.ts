@@ -186,13 +186,19 @@ export async function getConfiguracao(cliente: SupabaseClient | null): Promise<C
   return mapearConfiguracao(linha as LinhaConfiguracao)
 }
 
-export async function salvarConfiguracao(cliente: SupabaseClient | null, numeroWhatsapp: string, nomeExibido: string): Promise<Configuracao> {
+export async function salvarConfiguracao(
+  cliente: SupabaseClient | null,
+  numeroWhatsapp: string,
+  nomeExibido: string,
+  exibirVendidos: boolean,
+): Promise<Configuracao> {
   const supabase = garantirCliente(cliente)
   const { data: linha, error: erro } = await supabase
     .from('configuracoes')
     .update({
       numero_whatsapp: numeroWhatsapp.trim(),
       nome_exibido: nomeExibido.trim() || 'Couto Imóveis',
+      exibir_vendidos: Boolean(exibirVendidos),
     })
     .eq('id', 1)
     .select('*')
