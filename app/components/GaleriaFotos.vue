@@ -6,6 +6,7 @@ export default {
   props: {
     itens: { type: Array as PropType<ItemGaleria[]>, required: true },
     titulo: { type: String, required: true },
+    vendido: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -32,7 +33,7 @@ export default {
 
 <template>
   <div>
-    <div class="overflow-hidden rounded-[1.75rem] bg-areia-100 shadow-sm ring-1 ring-linha">
+    <div class="relative overflow-hidden rounded-[1.75rem] bg-areia-100 shadow-sm ring-1 ring-linha">
       <img
         v-if="fotoAtual"
         :src="fotoAtual.url"
@@ -42,6 +43,7 @@ export default {
       <div v-else class="flex aspect-[4/3] items-end bg-gradient-to-t from-floresta-900/70 to-areia-100 p-6 text-areia-50 sm:aspect-[16/9]">
         {{ titulo }} ainda não tem fotos.
       </div>
+      <MarcaDaguaVendido v-if="vendido" />
     </div>
     <div v-if="itens.length > 1" class="mt-3 flex gap-2 overflow-x-auto pb-1">
       <button

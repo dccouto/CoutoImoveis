@@ -30,7 +30,8 @@ export default {
         <div v-else class="flex h-full items-end bg-gradient-to-t from-floresta-900/80 to-areia-100 p-4 text-sm text-areia-50">
           Sem foto ainda
         </div>
-        <div class="absolute left-3 top-3 flex gap-2">
+        <MarcaDaguaVendido v-if="imovel.status === 'vendido'" />
+        <div class="absolute left-3 top-3 z-20 flex gap-2">
           <span class="inline-flex h-8 items-center rounded-full bg-papel/95 px-3 text-xs font-semibold uppercase tracking-wide text-floresta-900">
             {{ rotuloTipo(imovel.tipo) }}
           </span>

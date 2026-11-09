@@ -104,7 +104,11 @@ export default {
       </button>
     </div>
     <article v-else-if="imovelSelecionado" class="mt-4">
-      <GaleriaFotos :itens="itensGaleria" :titulo="imovelSelecionado.titulo" />
+      <GaleriaFotos
+        :itens="itensGaleria"
+        :titulo="imovelSelecionado.titulo"
+        :vendido="imovelSelecionado.status === 'vendido'"
+      />
       <div class="mt-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div class="flex flex-wrap items-center gap-3">
